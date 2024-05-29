@@ -1,17 +1,17 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { TarkovService } from './tarkov.service';
 
-@Controller('tarkov/items')
+@Controller('tarkov')
 export class TarkovController {
   constructor(private readonly tarkovService: TarkovService) {}
 
   @Get()
-  async getItems(@Query('name') name: string) {
-    try {
-      const itemData = await this.tarkovService.fetchItemData(name);
-      return { success: true, data: itemData };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
+  getHello(): string {
+    return 'Tarkov endpoint is working!';
+  }
+
+  @Get('item/:itemName')
+  getItem(@Param('itemName') itemName: string) {
+    return this.tarkovService.fetchItemData(itemName);
   }
 }

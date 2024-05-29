@@ -1,32 +1,34 @@
-import { Injectable } from '@nestjs/common';
-import fetch from 'node-fetch';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class TarkovService {
-  async fetchItemData(itemName: string) {
-    const response = await fetch('https://api.tarkov.dev/graphql', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        query: `{
-          items(name: "${itemName}") {
-            id
-            name
-            shortName
-            avg24hPrice
-          }
-        }`,
-      }),
-    });
+  constructor(private readonly httpService: HttpService) {}
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch item data');
+  async fetchItemData(itemName: string): Promise<any> {
+    const query = `
+      {
+        items(name: "${itemName}") {
+          id
+          name
+          shortName
+          avg24hPrice
+        }
+      }
+    `;
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post('https://api.tarkov.dev', { query }),
+      );
+
+      return response.data.data.items[0];
+    } catch (error) {
+      throw new HttpException(
+        'Failed to fetch item data',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-
-    const responseData = await response.json();
-    return responseData.data.items[0];
   }
 }
